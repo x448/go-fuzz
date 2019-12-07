@@ -61,10 +61,32 @@ func coordinatorMain(ln net.Listener) {
 		m.corpus.add(Artifact{[]byte{}, 0, false})
 	}
 
+        oldCrasherCount := len(m.crashers.m)
+        oldCorpusCount := len(m.corpus.m)	
+	
 	m.workers = make(map[int]*CoordinatorWorker)
 	coordinatorListen(m)
 
 	go coordinatorLoop(m)
+	
+        go func() {
+                for range time.NewTicker(1 * time.Second).C {
+                        if atomic.LoadUint32(&shutdown) != 0 {
+                                return
+                        }
+                        m.mu.Lock()
+                        newCrasherCount := len(m.crashers.m) - oldCrasherCount
+                        newCorpusCount := len(m.corpus.m) - oldCorpusCount
+                        m.mu.Unlock()
+
+                        if (*flagLimitNewCrashers > 0) && (newCrasherCount >= *flagLimitNewCrashers) {
+                                exitNow()
+                        }
+                        if (*flagLimitNewCorpus > 0) && (newCorpusCount >= *flagLimitNewCorpus) {
+                                exitNow()
+                        }
+                }
+        }()	
 
 	s := rpc.NewServer()
 	s.Register(m)
