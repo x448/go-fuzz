@@ -42,7 +42,9 @@ var (
 	flagSonar             = flag.Bool("sonar", true, "use sonar hints")
 	flagV                 = flag.Int("v", 0, "verbosity level")
 	flagHTTP              = flag.String("http", "", "HTTP server listen address (coordinator mode only)")
-
+        flagLimitNewCrashers  = flag.Int("limitnewcrashers", 0, "exit if max number of new crashers reached")
+        flagLimitNewCorpus    = flag.Int("limitnewcorpus", 0, "exit if max number of new corpus reached")
+	
 	shutdown        uint32
 	shutdownC       = make(chan struct{})
 	shutdownCleanup []func()
@@ -61,14 +63,7 @@ func main() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT)
 		<-c
-		atomic.StoreUint32(&shutdown, 1)
-		close(shutdownC)
-		log.Printf("shutting down...")
-		time.Sleep(2 * time.Second)
-		for _, f := range shutdownCleanup {
-			f()
-		}
-		os.Exit(0)
+		exitNow()
 	}()
 
 	runtime.GOMAXPROCS(min(*flagProcs, runtime.NumCPU()))
@@ -131,4 +126,15 @@ func expandHomeDir(path string) string {
 		path = filepath.Join(usr.HomeDir, path[2:])
 	}
 	return path
+}
+
+func exitNow(){
+        atomic.StoreUint32(&shutdown, 1)
+        close(shutdownC)
+        log.Printf("shutting down...")
+        time.Sleep(2 * time.Second)
+        for _, f := range shutdownCleanup {
+                f()
+        }
+        os.Exit(0)
 }
