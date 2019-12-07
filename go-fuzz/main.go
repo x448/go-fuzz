@@ -42,8 +42,8 @@ var (
 	flagSonar             = flag.Bool("sonar", true, "use sonar hints")
 	flagV                 = flag.Int("v", 0, "verbosity level")
 	flagHTTP              = flag.String("http", "", "HTTP server listen address (coordinator mode only)")
-        flagLimitNewCrashers  = flag.Int("limitnewcrashers", 0, "exit if max number of new crashers reached")
-        flagLimitNewCorpus    = flag.Int("limitnewcorpus", 0, "exit if max number of new corpus reached")
+        flagLimitNewCrashers  = flag.Int("limitnewcrashers", 10, "exit if max number of new crashers reached")
+        flagLimitNewCorpus    = flag.Int("limitnewcorpus", 1000, "exit if max number of new corpus reached")
 	
 	shutdown        uint32
 	shutdownC       = make(chan struct{})
